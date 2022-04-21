@@ -2,6 +2,8 @@ const EventEmitter = require('events')
 const HashMap = require('turbo-hash-map')
 const ProtomuxRPC = require('protomux-rpc')
 
+const DEFAULT_TIMEOUT = 5000
+
 module.exports = class HyperswarmRPC {
   constructor (dht) {
     this._dht = dht
@@ -10,7 +12,7 @@ module.exports = class HyperswarmRPC {
     this._servers = new Set()
   }
 
-  createServer (opts) {
+  createServer (opts = {}) {
     const server = new Server(this._dht, opts)
 
     this._servers.add(server)
@@ -24,6 +26,7 @@ module.exports = class HyperswarmRPC {
 
     if (rpc === undefined) {
       const stream = this._dht.connect(publicKey, opts)
+      stream.setTimeout(opts.timeout || DEFAULT_TIMEOUT)
 
       rpc = new ProtomuxRPC(stream, { id: publicKey })
 
@@ -56,6 +59,7 @@ class Server extends EventEmitter {
     super()
 
     this._dht = dht
+    this._opts = opts
 
     this._connections = new HashMap()
     this._responders = new Map()
@@ -79,6 +83,8 @@ class Server extends EventEmitter {
   }
 
   _onconnection (stream) {
+    stream.setTimeout(this._opts.timeout || DEFAULT_TIMEOUT)
+
     const rpc = new ProtomuxRPC(stream, { id: this.publicKey })
 
     this._connections.set(stream.publicKey, rpc)
