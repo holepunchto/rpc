@@ -5,15 +5,16 @@ const ProtomuxRPC = require('protomux-rpc')
 const DEFAULT_TIMEOUT = 5000
 
 module.exports = class HyperswarmRPC {
-  constructor (dht) {
+  constructor (dht, options = {}) {
     this._dht = dht
+    this._timeout = options.timeout || DEFAULT_TIMEOUT
 
     this._connections = new HashMap()
     this._servers = new Set()
   }
 
-  createServer (opts = {}) {
-    const server = new Server(this._dht, opts)
+  createServer (options = {}) {
+    const server = new Server(this._dht, this._timeout, options)
 
     this._servers.add(server)
     server.on('close', () => this._servers.delete(server))
@@ -21,12 +22,12 @@ module.exports = class HyperswarmRPC {
     return server
   }
 
-  async request (publicKey, method, value, opts = {}) {
+  async request (publicKey, method, value, options = {}) {
     let rpc = this._connections.get(publicKey)
 
     if (rpc === undefined) {
-      const stream = this._dht.connect(publicKey, opts)
-      stream.setTimeout(opts.timeout || DEFAULT_TIMEOUT)
+      const stream = this._dht.connect(publicKey, options)
+      stream.setTimeout(this._timeout)
 
       rpc = new ProtomuxRPC(stream, { id: publicKey })
 
@@ -34,11 +35,11 @@ module.exports = class HyperswarmRPC {
       rpc.on('close', () => this._connections.delete(publicKey))
     }
 
-    return rpc.request(method, value, opts)
+    return rpc.request(method, value, options)
   }
 
-  async destroy (opts = {}) {
-    if (!opts.force) {
+  async destroy (options = {}) {
+    if (!options.force) {
       const closing = []
 
       for (const server of this._servers) {
@@ -55,16 +56,16 @@ module.exports = class HyperswarmRPC {
 }
 
 class Server extends EventEmitter {
-  constructor (dht, opts) {
+  constructor (dht, timeout, options) {
     super()
 
     this._dht = dht
-    this._opts = opts
+    this._timeout = timeout
 
     this._connections = new HashMap()
     this._responders = new Map()
 
-    this._server = this._dht.createServer(typeof opts === 'object' && opts)
+    this._server = this._dht.createServer(typeof options === 'object' && options)
     this._server
       .on('close', this._onclose.bind(this))
       .on('listening', this._onlistening.bind(this))
@@ -83,7 +84,7 @@ class Server extends EventEmitter {
   }
 
   _onconnection (stream) {
-    stream.setTimeout(this._opts.timeout || DEFAULT_TIMEOUT)
+    stream.setTimeout(this._timeout)
 
     const rpc = new ProtomuxRPC(stream, { id: this.publicKey })
 
