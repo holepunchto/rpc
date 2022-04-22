@@ -59,7 +59,7 @@ Options include:
   // Optional encoding for both requests and responses, defaults to raw
   valueEncoding: encoding,
   requestEncoding: encoding, // Optional encoding for requests
-  reponseEncoding: encoding // Optional encoding for responses
+  responseEncoding: encoding // Optional encoding for responses
 }
 ```
 
@@ -92,7 +92,7 @@ Options include:
   // Optional encoding for both requests and responses, defaults to raw
   valueEncoding: encoding,
   requestEncoding: encoding, // Optional encoding for requests
-  reponseEncoding: encoding // Optional encoding for responses
+  responseEncoding: encoding // Optional encoding for responses
 }
 ```
 
