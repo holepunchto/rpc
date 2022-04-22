@@ -109,8 +109,8 @@ class Server extends EventEmitter {
     this._connections.set(stream.publicKey, rpc)
     rpc.on('close', () => this._connections.delete(stream.publicKey))
 
-    for (const [method, { opts, fn }] of this._responders) {
-      rpc.respond(method, opts, fn)
+    for (const [method, { options, handler }] of this._responders) {
+      rpc.respond(method, options, handler)
     }
   }
 
@@ -130,16 +130,16 @@ class Server extends EventEmitter {
     await this._server.close()
   }
 
-  respond (method, opts, fn) {
-    if (fn === undefined) {
-      fn = opts
-      opts = {}
+  respond (method, options, handler) {
+    if (handler === undefined) {
+      handler = options
+      options = {}
     }
 
-    this._responders.set(method, { opts, fn })
+    this._responders.set(method, { options, handler })
 
     for (const rpc of this._connections.values()) {
-      rpc.respond(method, opts, fn)
+      rpc.respond(method, options, handler)
     }
 
     return this
