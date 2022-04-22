@@ -75,6 +75,8 @@ This will also close any running servers. If you want to force close the instanc
 
 Create a new RPC server for responding to requests.
 
+Options are the same as [`dht.createServer()`](https://github.com/hyperswarm/dht#const-server--nodecreateserveroptions-onconnection).
+
 #### `await server.listen([keyPair])`
 
 Make the server listen on a key pair, defaulting to `rpc.defaultKeyPair`. To connect to this server use `keyPair.publicKey` as the connect address.
