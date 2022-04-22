@@ -133,7 +133,7 @@ test('reject in-progress request on destroy', async (t) => {
 
   await rpc.destroy()
 
-  t.exception(request, /channel closed/)
+  t.exception(request, /channel destroyed/)
 })
 
 test('reject in-progress request on force destroy', async (t) => {
@@ -150,5 +150,5 @@ test('reject in-progress request on force destroy', async (t) => {
 
   await rpc.destroy({ force: true })
 
-  t.exception(request, /channel closed/)
+  t.exception(request, /channel destroyed/)
 })

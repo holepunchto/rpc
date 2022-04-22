@@ -69,7 +69,7 @@ module.exports = class HyperswarmRPC {
     }
 
     for (const rpc of this._connections.values()) {
-      rpc.close()
+      rpc.destroy()
     }
   }
 }
