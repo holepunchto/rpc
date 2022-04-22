@@ -1,20 +1,29 @@
 const EventEmitter = require('events')
+const DHT = require('@hyperswarm/dht')
 const HashMap = require('turbo-hash-map')
 const ProtomuxRPC = require('protomux-rpc')
 
-const DEFAULT_TIMEOUT = 5000
-
 module.exports = class HyperswarmRPC {
-  constructor (dht, options = {}) {
+  constructor (options = {}) {
+    const {
+      seed,
+      keyPair = DHT.keyPair(seed),
+      timeout = 5000,
+      bootstrap,
+      debug,
+      dht = new DHT({ keyPair, bootstrap, debug })
+    } = options
+
     this._dht = dht
-    this._timeout = options.timeout || DEFAULT_TIMEOUT
+    this._defaultKeyPair = keyPair
+    this._timeout = timeout
 
     this._connections = new HashMap()
     this._servers = new Set()
   }
 
   createServer (options = {}) {
-    const server = new Server(this._dht, this._timeout, options)
+    const server = new Server(this._dht, this._defaultKeyPair, this._timeout, options)
 
     this._servers.add(server)
     server.on('close', () => this._servers.delete(server))
@@ -26,7 +35,10 @@ module.exports = class HyperswarmRPC {
     let rpc = this._connections.get(publicKey)
 
     if (rpc === undefined) {
-      const stream = this._dht.connect(publicKey, options)
+      const stream = this._dht.connect(publicKey, {
+        keyPair: this._defaultKeyPair
+      })
+
       stream.setTimeout(this._timeout)
 
       rpc = new ProtomuxRPC(stream, { id: publicKey })
@@ -56,16 +68,22 @@ module.exports = class HyperswarmRPC {
 }
 
 class Server extends EventEmitter {
-  constructor (dht, timeout, options) {
+  constructor (dht, defaultKeyPair, timeout, options = {}) {
     super()
 
+    const {
+      firewall,
+      holepunch
+    } = options
+
     this._dht = dht
+    this._defaultKeyPair = defaultKeyPair
     this._timeout = timeout
 
     this._connections = new HashMap()
     this._responders = new Map()
 
-    this._server = this._dht.createServer(typeof options === 'object' && options)
+    this._server = this._dht.createServer({ firewall, holepunch })
     this._server
       .on('close', this._onclose.bind(this))
       .on('listening', this._onlistening.bind(this))
@@ -104,7 +122,7 @@ class Server extends EventEmitter {
     return this._server.address()
   }
 
-  async listen (keyPair) {
+  async listen (keyPair = this._defaultKeyPair) {
     await this._server.listen(keyPair)
   }
 

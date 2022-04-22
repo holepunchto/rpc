@@ -6,7 +6,7 @@ import RPC from './index.js'
 test('basic', async (t) => {
   const [dht] = await createTestnet(3, t.teardown)
 
-  const rpc = new RPC(dht)
+  const rpc = new RPC({ dht })
 
   const server = rpc.createServer()
   await server.listen()
