@@ -22,6 +22,10 @@ module.exports = class HyperswarmRPC {
     this._servers = new Set()
   }
 
+  get defaultKeyPair () {
+    return this._defaultKeyPair
+  }
+
   createServer (options = {}) {
     const server = new Server(this._dht, this._defaultKeyPair, this._timeout, options)
 
