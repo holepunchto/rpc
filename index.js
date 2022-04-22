@@ -6,9 +6,9 @@ const ProtomuxRPC = require('protomux-rpc')
 module.exports = class HyperswarmRPC {
   constructor (options = {}) {
     const {
+      timeout = 5000,
       seed,
       keyPair = DHT.keyPair(seed),
-      timeout = 5000,
       bootstrap,
       debug,
       dht = new DHT({ keyPair, bootstrap, debug })
