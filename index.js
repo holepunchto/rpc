@@ -44,7 +44,10 @@ module.exports = class HyperswarmRPC {
       rpc = new ProtomuxRPC(stream, { id: publicKey })
 
       this._connections.set(publicKey, rpc)
-      rpc.on('close', () => this._connections.delete(publicKey))
+      rpc.on('close', () => {
+        stream.destroy()
+        this._connections.delete(publicKey)
+      })
     }
 
     return rpc.request(method, value, options)
@@ -107,7 +110,10 @@ class Server extends EventEmitter {
     const rpc = new ProtomuxRPC(stream, { id: this.publicKey })
 
     this._connections.set(stream.publicKey, rpc)
-    rpc.on('close', () => this._connections.delete(stream.publicKey))
+    rpc.on('close', () => {
+      stream.destroy()
+      this._connections.delete(stream.publicKey)
+    })
 
     for (const [method, { options, handler }] of this._responders) {
       rpc.respond(method, options, handler)
