@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "RPC over the Hyperswarm DHT",
   "main": "index.js",
+  "files": [
+    "index.js"
+  ],
   "scripts": {
     "test": "standard && brittle test.mjs"
   },
