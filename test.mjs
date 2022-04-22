@@ -68,11 +68,11 @@ test('add responder after connection', async (t) => {
   const server = rpc.createServer()
   await server.listen()
 
-  await t.exception(rpc.request(server.publicKey, 'void'), /unknown method 'void'/)
+  await t.exception(rpc.request(server.publicKey, 'echo', Buffer.alloc(0)), /unknown method 'echo'/)
 
-  server.respond('void', () => {})
+  server.respond('echo', (req) => req)
 
-  await t.execution(rpc.request(server.publicKey, 'void'))
+  await t.execution(rpc.request(server.publicKey, 'echo', Buffer.alloc(0)))
 })
 
 test('destroy', async (t) => {
@@ -110,9 +110,9 @@ test('reject in-progress request on server close', async (t) => {
   const server = rpc.createServer()
   await server.listen()
 
-  server.respond('void', () => {})
+  server.respond('echo', (req) => req)
 
-  const request = rpc.request(server.publicKey, 'void')
+  const request = rpc.request(server.publicKey, 'echo', Buffer.alloc(0))
 
   await server.close()
 
@@ -127,9 +127,9 @@ test('reject in-progress request on destroy', async (t) => {
   const server = rpc.createServer()
   await server.listen()
 
-  server.respond('void', () => {})
+  server.respond('echo', (req) => req)
 
-  const request = rpc.request(server.publicKey, 'void')
+  const request = rpc.request(server.publicKey, 'echo', Buffer.alloc(0))
 
   await rpc.destroy()
 
@@ -144,9 +144,9 @@ test('reject in-progress request on force destroy', async (t) => {
   const server = rpc.createServer()
   await server.listen()
 
-  server.respond('void', () => {})
+  server.respond('echo', (req) => req)
 
-  const request = rpc.request(server.publicKey, 'void')
+  const request = rpc.request(server.publicKey, 'echo', Buffer.alloc(0))
 
   await rpc.destroy({ force: true })
 
