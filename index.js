@@ -124,6 +124,10 @@ class Server extends EventEmitter {
     }
   }
 
+  get closed () {
+    return this._server.closed
+  }
+
   get publicKey () {
     return this._server.publicKey
   }
