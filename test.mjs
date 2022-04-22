@@ -102,7 +102,7 @@ test('force destroy', async (t) => {
   t.is(server.closed, false)
 })
 
-test('reject in-progress request on server close', async (t) => {
+test('reject inflight request on server close', async (t) => {
   const [dht] = await createTestnet(3, t.teardown)
 
   const rpc = new RPC({ dht })
@@ -119,7 +119,7 @@ test('reject in-progress request on server close', async (t) => {
   t.exception(request, /channel closed/)
 })
 
-test('reject in-progress request on destroy', async (t) => {
+test('reject inflight request on destroy', async (t) => {
   const [dht] = await createTestnet(3, t.teardown)
 
   const rpc = new RPC({ dht })
@@ -136,7 +136,7 @@ test('reject in-progress request on destroy', async (t) => {
   t.exception(request, /channel destroyed/)
 })
 
-test('reject in-progress request on force destroy', async (t) => {
+test('reject inflight request on force destroy', async (t) => {
   const [dht] = await createTestnet(3, t.teardown)
 
   const rpc = new RPC({ dht })
