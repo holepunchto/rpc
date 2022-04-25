@@ -48,7 +48,7 @@ Options include:
 }
 ```
 
-#### `const response = await rpc.request(method, value[, options])`
+#### `const response = await rpc.request(publicKey, method, value[, options])`
 
 Perform an RPC request, returning a promise that will resolve with the value returned by the request handler or reject with an error.
 
