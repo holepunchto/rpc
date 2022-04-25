@@ -7,6 +7,7 @@ module.exports = class HyperswarmRPC {
   constructor (options = {}) {
     const {
       timeout = 5000,
+      valueEncoding,
       seed,
       keyPair = DHT.keyPair(seed),
       bootstrap,
@@ -17,6 +18,7 @@ module.exports = class HyperswarmRPC {
     this._dht = dht
     this._defaultKeyPair = keyPair
     this._timeout = timeout
+    this._defaultValueEncoding = valueEncoding
 
     this._connections = new HashMap()
     this._servers = new Set()
@@ -27,7 +29,13 @@ module.exports = class HyperswarmRPC {
   }
 
   createServer (options = {}) {
-    const server = new Server(this._dht, this._defaultKeyPair, this._timeout, options)
+    const server = new Server(
+      this._dht,
+      this._defaultKeyPair,
+      this._timeout,
+      this._defaultValueEncoding,
+      options
+    )
 
     this._servers.add(server)
     server.on('close', () => this._servers.delete(server))
@@ -45,7 +53,10 @@ module.exports = class HyperswarmRPC {
 
       stream.setTimeout(this._timeout)
 
-      rpc = new ProtomuxRPC(stream, { id: publicKey })
+      rpc = new ProtomuxRPC(stream, {
+        id: publicKey,
+        valueEncoding: this._defaultValueEncoding
+      })
 
       this._connections.set(publicKey, rpc)
       rpc.on('close', () => {
@@ -75,7 +86,7 @@ module.exports = class HyperswarmRPC {
 }
 
 class Server extends EventEmitter {
-  constructor (dht, defaultKeyPair, timeout, options = {}) {
+  constructor (dht, defaultKeyPair, timeout, defaultValueEncoding, options = {}) {
     super()
 
     const {
@@ -86,6 +97,7 @@ class Server extends EventEmitter {
     this._dht = dht
     this._defaultKeyPair = defaultKeyPair
     this._timeout = timeout
+    this._defaultValueEncoding = defaultValueEncoding
 
     this._connections = new HashMap()
     this._responders = new Map()
@@ -111,7 +123,10 @@ class Server extends EventEmitter {
   _onconnection (stream) {
     stream.setTimeout(this._timeout)
 
-    const rpc = new ProtomuxRPC(stream, { id: this.publicKey })
+    const rpc = new ProtomuxRPC(stream, {
+      id: this.publicKey,
+      valueEncoding: this._defaultValueEncoding
+  })
 
     this._connections.set(stream.publicKey, rpc)
     rpc.on('close', () => {

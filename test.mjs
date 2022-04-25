@@ -1,6 +1,7 @@
 import test from 'brittle'
 import DHT from '@hyperswarm/dht'
 import createTestnet from '@hyperswarm/testnet'
+import { string } from 'compact-encoding'
 
 import RPC from './index.js'
 
@@ -17,6 +18,25 @@ test('basic', async (t) => {
   t.alike(
     await rpc.request(server.publicKey, 'echo', Buffer.from('hello world')),
     Buffer.from('hello world')
+  )
+})
+
+test('default encoding', async (t) => {
+  const [dht] = await createTestnet(3, t.teardown)
+
+  const rpc = new RPC({ dht, valueEncoding: string })
+
+  const server = rpc.createServer()
+  await server.listen()
+
+  server.respond('echo', (req) => {
+    t.is(req, 'hello world')
+    return req
+  })
+
+  t.alike(
+    await rpc.request(server.publicKey, 'echo', 'hello world'),
+    'hello world'
   )
 })
 

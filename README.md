@@ -34,6 +34,8 @@ Options include:
 {
   // The duration for which connections should be kept alive without activity.
   timeout: 5000,
+  // Optional default value encoding.
+  valueEncoding: encoding,
   // A Noise keypair that will be used by default to listen/connect on the DHT.
   // Defaults to a new key pair.
   keyPair,
