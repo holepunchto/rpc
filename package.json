@@ -21,8 +21,7 @@
   "homepage": "https://github.com/hyperswarm/rpc#readme",
   "dependencies": {
     "@hyperswarm/dht": "^5.0.24",
-    "protomux-rpc": "^1.2.0",
-    "turbo-hash-map": "^1.0.3"
+    "protomux-rpc": "^1.2.0"
   },
   "devDependencies": {
     "@hyperswarm/testnet": "^1.1.0",

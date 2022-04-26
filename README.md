@@ -18,7 +18,8 @@ await server.listen()
 
 server.respond('echo', (req) => req)
 
-await rpc.request(server.publicKey, 'echo', Buffer.from('hello world'))
+const client = rpc.connect(server.publicKey)
+await client.request('echo', Buffer.from('hello world'))
 // <Buffer 'hello world'>
 ```
 
@@ -32,8 +33,6 @@ Options include:
 
 ```js
 {
-  // The duration for which connections should be kept alive without activity.
-  timeout: 5000,
   // Optional default value encoding.
   valueEncoding: encoding,
   // A Noise keypair that will be used by default to listen/connect on the DHT.
@@ -50,7 +49,19 @@ Options include:
 }
 ```
 
-#### `const response = await rpc.request(publicKey, method, value[, options])`
+#### `await rpc.destroy([options])`
+
+Fully destroy this RPC instance.
+
+This will also close any running servers. If you want to force close the instance without waiting for the servers to close pass `{ force: true }`.
+
+### Creating clients
+
+#### `const client = rpc.connect(publicKey[, options])`
+
+Options are the same as [`dht.connect()`](https://github.com/hyperswarm/dht#const-encryptedconnection--nodeconnectremotepublickey-options).
+
+#### `const response = await client.request(method, value[, options])`
 
 Perform an RPC request, returning a promise that will resolve with the value returned by the request handler or reject with an error.
 
@@ -65,11 +76,39 @@ Options include:
 }
 ```
 
-#### `await rpc.destroy([options])`
+#### `client.event(method, value[, options])`
 
-Fully destroy this RPC instance.
+Perform an RPC request but don't wait for a response.
 
-This will also close any running servers. If you want to force close the instance without waiting for the servers to close pass `{ force: true }`.
+Options are the same as `client.request()`.
+
+#### `client.cork()`
+
+Cork the underlying channel. See [`channel.cork()`](https://github.com/mafintosh/protomux#channelcork) for more information.
+
+#### `client.uncork()`
+
+Uncork the underlying channel. See [`channel.uncork()`](https://github.com/mafintosh/protomux#channeluncork) for more information.
+
+#### `await client.end()`
+
+Gracefully end the RPC channel, waiting for all inflights requests before closing.
+
+#### `client.destroy([err])`
+
+Forcefully close the RPC channel, rejecting any inflight requests.
+
+#### `client.on('open', [handshake])`
+
+Emitted when the remote side adds the RPC protocol.
+
+#### `client.on('close')`
+
+Emitted when the RPC channel closes, i.e. when the remote side closes or rejects the RPC protocol or we closed it.
+
+#### `client.on('destroy')`
+
+Emitted when the RPC channel is destroyed, i.e. after `close` when all pending promises has resolved.
 
 ### Creating servers
 
@@ -99,6 +138,10 @@ Options include:
   responseEncoding: encoding // Optional encoding for responses
 }
 ```
+
+#### `server.unrespond(method)`
+
+Remove a handler for an RPC method.
 
 #### `await server.close()`
 

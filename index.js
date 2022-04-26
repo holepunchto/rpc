@@ -1,12 +1,10 @@
 const EventEmitter = require('events')
 const DHT = require('@hyperswarm/dht')
-const HashMap = require('turbo-hash-map')
 const ProtomuxRPC = require('protomux-rpc')
 
 module.exports = class HyperswarmRPC {
   constructor (options = {}) {
     const {
-      timeout = 5000,
       valueEncoding,
       seed,
       keyPair = DHT.keyPair(seed),
@@ -17,10 +15,9 @@ module.exports = class HyperswarmRPC {
 
     this._dht = dht
     this._defaultKeyPair = keyPair
-    this._timeout = timeout
     this._defaultValueEncoding = valueEncoding
 
-    this._connections = new HashMap()
+    this._clients = new Set()
     this._servers = new Set()
   }
 
@@ -32,7 +29,6 @@ module.exports = class HyperswarmRPC {
     const server = new Server(
       this._dht,
       this._defaultKeyPair,
-      this._timeout,
       this._defaultValueEncoding,
       options
     )
@@ -43,29 +39,18 @@ module.exports = class HyperswarmRPC {
     return server
   }
 
-  async request (publicKey, method, value, options = {}) {
-    let rpc = this._connections.get(publicKey)
+  connect (publicKey, options = {}) {
+    const client = new Client(
+      this._dht,
+      this._defaultValueEncoding,
+      publicKey,
+      options
+    )
 
-    if (rpc === undefined) {
-      const stream = this._dht.connect(publicKey, {
-        keyPair: this._defaultKeyPair
-      })
+    this._clients.add(client)
+    client.on('close', () => this._clients.delete(client))
 
-      stream.setTimeout(this._timeout)
-
-      rpc = new ProtomuxRPC(stream, {
-        id: publicKey,
-        valueEncoding: this._defaultValueEncoding
-      })
-
-      this._connections.set(publicKey, rpc)
-      rpc.on('close', () => {
-        stream.destroy()
-        this._connections.delete(publicKey)
-      })
-    }
-
-    return rpc.request(method, value, options)
+    return client
   }
 
   async destroy (options = {}) {
@@ -79,14 +64,69 @@ module.exports = class HyperswarmRPC {
       await Promise.allSettled(closing)
     }
 
-    for (const rpc of this._connections.values()) {
-      rpc.destroy()
+    for (const client of this._clients.values()) {
+      client.destroy()
     }
   }
 }
 
+class Client extends EventEmitter {
+  constructor (dht, defaultValueEncoding, publicKey, options = {}) {
+    super()
+
+    const {
+      nodes,
+      keyPair
+    } = options
+
+    this._dht = dht
+    this._defaultValueEncoding = defaultValueEncoding
+    this._publicKey = publicKey
+
+    this._stream = this._dht.connect(publicKey, { nodes, keyPair })
+
+    this._client = new ProtomuxRPC(this._stream, {
+      id: publicKey,
+      valueEncoding: this._defaultValueEncoding
+    })
+    this._client
+      .on('open', this._onopen.bind(this))
+      .on('close', this._onclose.bind(this))
+      .on('destroy', this._ondestroy.bind(this))
+  }
+
+  _onopen () {
+    this.emit('open')
+  }
+
+  _onclose () {
+    this._stream.destroy()
+    this.emit('close')
+  }
+
+  _ondestroy () {
+    this.emit('destroy')
+  }
+
+  async request (method, value, options = {}) {
+    return this._client.request(method, value, options)
+  }
+
+  event (method, value, options = {}) {
+    this._client.event(method, value, options)
+  }
+
+  async end () {
+    await this._client.end()
+  }
+
+  destroy (err) {
+    this._client.destroy(err)
+  }
+}
+
 class Server extends EventEmitter {
-  constructor (dht, defaultKeyPair, timeout, defaultValueEncoding, options = {}) {
+  constructor (dht, defaultKeyPair, defaultValueEncoding, options = {}) {
     super()
 
     const {
@@ -96,10 +136,9 @@ class Server extends EventEmitter {
 
     this._dht = dht
     this._defaultKeyPair = defaultKeyPair
-    this._timeout = timeout
     this._defaultValueEncoding = defaultValueEncoding
 
-    this._connections = new HashMap()
+    this._connections = new Set()
     this._responders = new Map()
 
     this._server = this._dht.createServer({ firewall, holepunch })
@@ -121,17 +160,15 @@ class Server extends EventEmitter {
   }
 
   _onconnection (stream) {
-    stream.setTimeout(this._timeout)
-
     const rpc = new ProtomuxRPC(stream, {
       id: this.publicKey,
       valueEncoding: this._defaultValueEncoding
-  })
+    })
 
-    this._connections.set(stream.publicKey, rpc)
+    this._connections.add(rpc)
     rpc.on('close', () => {
       stream.destroy()
-      this._connections.delete(stream.publicKey)
+      this._connections.delete(rpc)
     })
 
     for (const [method, { options, handler }] of this._responders) {
@@ -167,8 +204,18 @@ class Server extends EventEmitter {
 
     this._responders.set(method, { options, handler })
 
-    for (const rpc of this._connections.values()) {
+    for (const rpc of this._connections) {
       rpc.respond(method, options, handler)
+    }
+
+    return this
+  }
+
+  unrespond (method) {
+    this._responders.delete(method)
+
+    for (const rpc of this._connections) {
+      rpc.unrespond(method)
     }
 
     return this

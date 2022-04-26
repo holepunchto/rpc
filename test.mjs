@@ -15,8 +15,10 @@ test('basic', async (t) => {
 
   server.respond('echo', (req) => req)
 
+  const client = rpc.connect(server.publicKey)
+
   t.alike(
-    await rpc.request(server.publicKey, 'echo', Buffer.from('hello world')),
+    await client.request('echo', Buffer.from('hello world')),
     Buffer.from('hello world')
   )
 })
@@ -34,8 +36,10 @@ test('default encoding', async (t) => {
     return req
   })
 
+  const client = rpc.connect(server.publicKey)
+
   t.alike(
-    await rpc.request(server.publicKey, 'echo', 'hello world'),
+    await client.request('echo', 'hello world'),
     'hello world'
   )
 })
@@ -88,11 +92,13 @@ test('add responder after connection', async (t) => {
   const server = rpc.createServer()
   await server.listen()
 
-  await t.exception(rpc.request(server.publicKey, 'echo', Buffer.alloc(0)), /unknown method 'echo'/)
+  const client = rpc.connect(server.publicKey)
+
+  await t.exception(client.request('echo', Buffer.alloc(0)), /unknown method 'echo'/)
 
   server.respond('echo', (req) => req)
 
-  await t.execution(rpc.request(server.publicKey, 'echo', Buffer.alloc(0)))
+  await t.execution(client.request('echo', Buffer.alloc(0)))
 })
 
 test('destroy', async (t) => {
@@ -132,7 +138,9 @@ test('reject inflight request on server close', async (t) => {
 
   server.respond('echo', (req) => req)
 
-  const request = rpc.request(server.publicKey, 'echo', Buffer.alloc(0))
+  const client = rpc.connect(server.publicKey)
+
+  const request = client.request('echo', Buffer.alloc(0))
 
   await server.close()
 
@@ -149,7 +157,9 @@ test('reject inflight request on destroy', async (t) => {
 
   server.respond('echo', (req) => req)
 
-  const request = rpc.request(server.publicKey, 'echo', Buffer.alloc(0))
+  const client = rpc.connect(server.publicKey)
+
+  const request = client.request('echo', Buffer.alloc(0))
 
   await rpc.destroy()
 
@@ -166,7 +176,9 @@ test('reject inflight request on force destroy', async (t) => {
 
   server.respond('echo', (req) => req)
 
-  const request = rpc.request(server.publicKey, 'echo', Buffer.alloc(0))
+  const client = rpc.connect(server.publicKey)
+
+  const request = client.request('echo', Buffer.alloc(0))
 
   await rpc.destroy({ force: true })
 
