@@ -10,12 +10,13 @@ module.exports = class HyperswarmRPC {
       keyPair = DHT.keyPair(seed),
       bootstrap,
       debug,
-      dht = new DHT({ keyPair, bootstrap, debug })
+      dht
     } = options
 
-    this._dht = dht
+    this._dht = dht || new DHT({ keyPair, bootstrap, debug })
     this._defaultKeyPair = keyPair
     this._defaultValueEncoding = valueEncoding
+    this._autoDestroy = !dht
 
     this._clients = new Set()
     this._servers = new Set()
@@ -67,6 +68,8 @@ module.exports = class HyperswarmRPC {
     for (const client of this._clients.values()) {
       client.destroy()
     }
+
+    if (this._autoDestroy) await this._dht.destroy()
   }
 }
 
