@@ -61,6 +61,18 @@ This will also close any running servers. If you want to force close the instanc
 
 Options are the same as [`dht.connect()`](https://github.com/hyperswarm/dht#const-encryptedconnection--nodeconnectremotepublickey-options).
 
+#### `client.closed`
+
+Whether or not the RPC channel is closed.
+
+#### `client.mux`
+
+The muxer used by the channel.
+
+#### `client.stream`
+
+The stream used by the channel.
+
 #### `const response = await client.request(method, value[, options])`
 
 Perform an RPC request, returning a promise that will resolve with the value returned by the request handler or reject with an error.

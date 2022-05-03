@@ -111,6 +111,18 @@ class Client extends EventEmitter {
     this.emit('destroy')
   }
 
+  get closed () {
+    return this._client.closed
+  }
+
+  get mux () {
+    return this._client.mux
+  }
+
+  get stream () {
+    return this._client.stream
+  }
+
   async request (method, value, options = {}) {
     return this._client.request(method, value, options)
   }
