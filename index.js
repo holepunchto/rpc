@@ -88,11 +88,11 @@ class Client extends EventEmitter {
 
     this._stream = this._dht.connect(publicKey, { nodes, keyPair })
 
-    this._client = new ProtomuxRPC(this._stream, {
+    this._rpc = new ProtomuxRPC(this._stream, {
       id: publicKey,
       valueEncoding: this._defaultValueEncoding
     })
-    this._client
+    this._rpc
       .on('open', this._onopen.bind(this))
       .on('close', this._onclose.bind(this))
       .on('destroy', this._ondestroy.bind(this))
@@ -111,32 +111,36 @@ class Client extends EventEmitter {
     this.emit('destroy')
   }
 
+  get rpc () {
+    return this._rpc
+  }
+
   get closed () {
-    return this._client.closed
+    return this._rpc.closed
   }
 
   get mux () {
-    return this._client.mux
+    return this._rpc.mux
   }
 
   get stream () {
-    return this._client.stream
+    return this._rpc.stream
   }
 
   async request (method, value, options = {}) {
-    return this._client.request(method, value, options)
+    return this._rpc.request(method, value, options)
   }
 
   event (method, value, options = {}) {
-    this._client.event(method, value, options)
+    this._rpc.event(method, value, options)
   }
 
   async end () {
-    await this._client.end()
+    await this._rpc.end()
   }
 
   destroy (err) {
-    this._client.destroy(err)
+    this._rpc.destroy(err)
   }
 }
 
@@ -189,6 +193,8 @@ class Server extends EventEmitter {
     for (const [method, { options, handler }] of this._responders) {
       rpc.respond(method, options, handler)
     }
+
+    this.emit('connection', rpc)
   }
 
   get closed () {

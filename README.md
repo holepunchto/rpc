@@ -61,6 +61,10 @@ This will also close any running servers. If you want to force close the instanc
 
 Options are the same as [`dht.connect()`](https://github.com/hyperswarm/dht#const-encryptedconnection--nodeconnectremotepublickey-options).
 
+#### `client.rpc`
+
+The [`ProtomuxRPC`](https://github.com/hypercore-skunkworks/protomux-rpc#api) instance used by the client.
+
 #### `client.closed`
 
 Whether or not the RPC channel is closed.
@@ -174,6 +178,10 @@ Returns an object containing the address of the server:
 #### `server.on('listening')`
 
 Emitted when the server is fully listening on a key pair.
+
+#### `server.on('connection', rpc)`
+
+Emitted when an RPC client connects. `rpc` is a [`ProtomuxRPC`](https://github.com/hypercore-skunkworks/protomux-rpc#api) instance.
 
 #### `server.on('close')`
 
