@@ -184,3 +184,46 @@ test('reject inflight request on force destroy', async (t) => {
 
   t.exception(request, /channel destroyed/)
 })
+
+test('mux additional channel over connection', async (t) => {
+  t.plan(2)
+
+  const [dht] = await createTestnet(3, t.teardown)
+
+  const rpc = new RPC({ dht })
+
+  const server = rpc.createServer()
+  await server.listen()
+
+  server.on('connection', (rpc) => {
+    const msg = setup(rpc.mux)
+
+    msg.onmessage = (req) => {
+      t.is(req, 'hello server')
+      msg.send('hello client')
+    }
+  })
+
+  const client = rpc.connect(server.publicKey)
+
+  const msg = setup(client.mux)
+
+  msg.send('hello server')
+  msg.onmessage = (req) => {
+    t.is(req, 'hello client')
+  }
+
+  function setup (mux) {
+    const channel = mux.createChannel({
+      protocol: 'test'
+    })
+
+    const message = channel.addMessage({
+      encoding: string
+    })
+
+    channel.open()
+
+    return message
+  }
+})
