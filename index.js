@@ -96,6 +96,9 @@ class Client extends EventEmitter {
       .on('open', this._onopen.bind(this))
       .on('close', this._onclose.bind(this))
       .on('destroy', this._ondestroy.bind(this))
+
+    // For Hypercore replication
+    this._stream.userData = this._rpc.mux
   }
 
   _onopen () {
@@ -183,6 +186,9 @@ class Server extends EventEmitter {
       id: this.publicKey,
       valueEncoding: this._defaultValueEncoding
     })
+
+    // For Hypercore replication
+    stream.userData = rpc.mux
 
     this._connections.add(rpc)
     rpc.on('close', () => {
