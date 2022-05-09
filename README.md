@@ -55,6 +55,8 @@ Fully destroy this RPC instance.
 
 This will also close any running servers. If you want to force close the instance without waiting for the servers to close pass `{ force: true }`.
 
+If a DHT instance was passed when constructing the RPC instance, this DHT will *not* be destroyed; the RPC instance will only destroy DHT instances that it itself has constructed.
+
 ### Creating clients
 
 #### `const client = rpc.connect(publicKey[, options])`
