@@ -21,6 +21,8 @@ test('basic', async (t) => {
     await client.request('echo', Buffer.from('hello world')),
     Buffer.from('hello world')
   )
+
+  await rpc.destroy()
 })
 
 test('default encoding', async (t) => {
@@ -42,6 +44,8 @@ test('default encoding', async (t) => {
     await client.request('echo', 'hello world'),
     'hello world'
   )
+
+  await rpc.destroy()
 })
 
 test('server address', async (t) => {
@@ -57,6 +61,8 @@ test('server address', async (t) => {
     port: dht.port,
     publicKey: server.publicKey
   })
+
+  await rpc.destroy()
 })
 
 test('listen using default key pair', async (t) => {
@@ -68,6 +74,8 @@ test('listen using default key pair', async (t) => {
   await server.listen()
 
   t.is(server.publicKey, rpc.defaultKeyPair.publicKey)
+
+  await rpc.destroy()
 })
 
 test('listen using custom default key pair', async (t) => {
@@ -82,6 +90,8 @@ test('listen using custom default key pair', async (t) => {
   await server.listen()
 
   t.is(server.publicKey, keyPair.publicKey)
+
+  await rpc.destroy()
 })
 
 test('add responder after connection', async (t) => {
@@ -99,6 +109,8 @@ test('add responder after connection', async (t) => {
   server.respond('echo', (req) => req)
 
   await t.execution(client.request('echo', Buffer.alloc(0)))
+
+  await rpc.destroy()
 })
 
 test('destroy', async (t) => {
@@ -144,7 +156,9 @@ test('reject inflight request on server close', async (t) => {
 
   await server.close()
 
-  t.exception(request, /channel closed/)
+  await t.exception(request, /channel closed/)
+
+  await rpc.destroy()
 })
 
 test('reject inflight request on destroy', async (t) => {
@@ -163,7 +177,7 @@ test('reject inflight request on destroy', async (t) => {
 
   await rpc.destroy()
 
-  t.exception(request, /channel destroyed/)
+  await t.exception(request, /channel destroyed/)
 })
 
 test('reject inflight request on force destroy', async (t) => {
@@ -182,12 +196,10 @@ test('reject inflight request on force destroy', async (t) => {
 
   await rpc.destroy({ force: true })
 
-  t.exception(request, /channel destroyed/)
+  await t.exception(request, /channel destroyed/)
 })
 
 test('mux additional channel over connection', async (t) => {
-  t.plan(2)
-
   const [dht] = await createTestnet(3, t.teardown)
 
   const rpc = new RPC({ dht })
@@ -195,11 +207,14 @@ test('mux additional channel over connection', async (t) => {
   const server = rpc.createServer()
   await server.listen()
 
+  const io = t.test('io')
+  io.plan(2)
+
   server.on('connection', (rpc) => {
     const msg = setup(rpc.mux)
 
     msg.onmessage = (req) => {
-      t.is(req, 'hello server')
+      io.is(req, 'hello server')
       msg.send('hello client')
     }
   })
@@ -210,8 +225,11 @@ test('mux additional channel over connection', async (t) => {
 
   msg.send('hello server')
   msg.onmessage = (req) => {
-    t.is(req, 'hello client')
+    io.is(req, 'hello client')
   }
+
+  await io
+  await rpc.destroy()
 
   function setup (mux) {
     const channel = mux.createChannel({
