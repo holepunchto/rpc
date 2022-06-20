@@ -22,6 +22,10 @@ module.exports = class HyperswarmRPC {
     this._servers = new Set()
   }
 
+  get dht () {
+    return this._dht
+  }
+
   get defaultKeyPair () {
     return this._defaultKeyPair
   }
@@ -114,6 +118,10 @@ class Client extends EventEmitter {
     this.emit('destroy')
   }
 
+  get dht () {
+    return this._dht
+  }
+
   get rpc () {
     return this._rpc
   }
@@ -203,12 +211,20 @@ class Server extends EventEmitter {
     this.emit('connection', rpc)
   }
 
+  get dht () {
+    return this._dht
+  }
+
   get closed () {
     return this._server.closed
   }
 
   get publicKey () {
     return this._server.publicKey
+  }
+
+  get connections () {
+    return this._connections
   }
 
   address () {

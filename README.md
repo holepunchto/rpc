@@ -63,6 +63,10 @@ If a DHT instance was passed when constructing the RPC instance, this DHT will *
 
 Options are the same as [`dht.connect()`](https://github.com/hyperswarm/dht#const-encryptedconnection--nodeconnectremotepublickey-options).
 
+#### `client.dht`
+
+The [`DHT`](https://github.com/hyperswarm/dht#api) instance used by the client.
+
 #### `client.rpc`
 
 The [`ProtomuxRPC`](https://github.com/hypercore-skunkworks/protomux-rpc#api) instance used by the client.
@@ -135,6 +139,10 @@ Emitted when the RPC channel is destroyed, i.e. after `close` when all pending p
 Create a new RPC server for responding to requests.
 
 Options are the same as [`dht.createServer()`](https://github.com/hyperswarm/dht#const-server--nodecreateserveroptions-onconnection).
+
+#### `server.dht`
+
+The [`DHT`](https://github.com/hyperswarm/dht#api) instance used by the server.
 
 #### `await server.listen([keyPair])`
 
