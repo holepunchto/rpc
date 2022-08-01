@@ -69,7 +69,7 @@ The [`DHT`](https://github.com/hyperswarm/dht#api) instance used by the client.
 
 #### `client.rpc`
 
-The [`ProtomuxRPC`](https://github.com/hypercore-skunkworks/protomux-rpc#api) instance used by the client.
+The [`ProtomuxRPC`](https://github.com/holepunchto/protomux-rpc#api) instance used by the client.
 
 #### `client.closed`
 
@@ -191,7 +191,7 @@ Emitted when the server is fully listening on a key pair.
 
 #### `server.on('connection', rpc)`
 
-Emitted when an RPC client connects. `rpc` is a [`ProtomuxRPC`](https://github.com/hypercore-skunkworks/protomux-rpc#api) instance.
+Emitted when an RPC client connects. `rpc` is a [`ProtomuxRPC`](https://github.com/holepunchto/protomux-rpc#api) instance.
 
 #### `server.on('close')`
 
