@@ -2,6 +2,7 @@ import test from 'brittle'
 import DHT from '@hyperswarm/dht'
 import createTestnet from '@hyperswarm/testnet'
 import { string } from 'compact-encoding'
+import crypto from 'hypercore-crypto'
 
 import RPC from './index.js'
 
@@ -44,6 +45,27 @@ test('default encoding', async (t) => {
     await client.request('echo', 'hello world'),
     'hello world'
   )
+
+  await rpc.destroy()
+})
+
+test('remote key', async (t) => {
+  const [dht] = await createTestnet(3, t.teardown)
+
+  const keyPair = crypto.keyPair()
+
+  const rpc = new RPC({ dht, valueEncoding: string })
+
+  const server = rpc.createServer()
+  await server.listen()
+
+  server.respond('echo', (req, remoteKey) => {
+    t.alike(remoteKey, keyPair.publicKey)
+    return req
+  })
+
+  const client = rpc.connect(server.publicKey, { keyPair })
+  await client.request('echo', 'hello world')
 
   await rpc.destroy()
 })

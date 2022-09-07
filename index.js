@@ -205,7 +205,11 @@ class Server extends EventEmitter {
     })
 
     for (const [method, { options, handler }] of this._responders) {
-      rpc.respond(method, options, handler)
+      rpc.respond(
+        method,
+        options,
+        req => handler(req, stream.remotePublicKey)
+      )
     }
 
     this.emit('connection', rpc)
