@@ -266,5 +266,5 @@ class Server extends EventEmitter {
 }
 
 function wrap (handler, rpc) {
-  return (request) => handler(request, rpc.stream.remotePublicKey)
+  return (request) => handler(request, rpc)
 }

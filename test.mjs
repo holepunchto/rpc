@@ -58,8 +58,8 @@ test('remote key', async (t) => {
   const server = rpc.createServer()
   await server.listen()
 
-  server.respond('echo', (req, remoteKey) => {
-    t.alike(remoteKey, keyPair.publicKey)
+  server.respond('echo', (req, rpc) => {
+    t.alike(rpc.stream.remotePublicKey, keyPair.publicKey)
     return req
   })
 
