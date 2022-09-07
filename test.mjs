@@ -2,7 +2,6 @@ import test from 'brittle'
 import DHT from '@hyperswarm/dht'
 import createTestnet from '@hyperswarm/testnet'
 import { string } from 'compact-encoding'
-import crypto from 'hypercore-crypto'
 
 import RPC from './index.js'
 
@@ -52,7 +51,7 @@ test('default encoding', async (t) => {
 test('remote key', async (t) => {
   const [dht] = await createTestnet(3, t.teardown)
 
-  const keyPair = crypto.keyPair()
+  const keyPair = DHT.keyPair()
 
   const rpc = new RPC({ dht, valueEncoding: string })
 

@@ -205,11 +205,7 @@ class Server extends EventEmitter {
     })
 
     for (const [method, { options, handler }] of this._responders) {
-      rpc.respond(
-        method,
-        options,
-        req => handler(req, stream.remotePublicKey)
-      )
+      rpc.respond(method, options, wrap(handler, rpc))
     }
 
     this.emit('connection', rpc)
@@ -252,7 +248,7 @@ class Server extends EventEmitter {
     this._responders.set(method, { options, handler })
 
     for (const rpc of this._connections) {
-      rpc.respond(method, options, handler)
+      rpc.respond(method, options, wrap(handler, rpc))
     }
 
     return this
@@ -267,4 +263,8 @@ class Server extends EventEmitter {
 
     return this
   }
+}
+
+function wrap (handler, rpc) {
+  return (request) => handler(request, rpc.stream.remotePublicKey)
 }
