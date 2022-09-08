@@ -48,6 +48,27 @@ test('default encoding', async (t) => {
   await rpc.destroy()
 })
 
+test('remote key', async (t) => {
+  const [dht] = await createTestnet(3, t.teardown)
+
+  const keyPair = DHT.keyPair()
+
+  const rpc = new RPC({ dht, valueEncoding: string })
+
+  const server = rpc.createServer()
+  await server.listen()
+
+  server.respond('echo', (req, rpc) => {
+    t.alike(rpc.stream.remotePublicKey, keyPair.publicKey)
+    return req
+  })
+
+  const client = rpc.connect(server.publicKey, { keyPair })
+  await client.request('echo', 'hello world')
+
+  await rpc.destroy()
+})
+
 test('server address', async (t) => {
   const [dht] = await createTestnet(3, t.teardown)
 

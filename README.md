@@ -150,7 +150,7 @@ Make the server listen on a key pair, defaulting to `rpc.defaultKeyPair`. To con
 
 #### `server.respond(method[, options], handler)`
 
-Register a handler for an RPC method. The handler is passed the request value and must either return the response value or throw an error.
+Register a handler for an RPC method. The handler has the signature `handler(request, rpc)` and must either return the response value or throw an error. `rpc` is a [`ProtomuxRPC`](https://github.com/holepunchto/protomux-rpc#api) instance.
 
 Only a single handler may be active for any given method; any previous handler is overwritten when registering a new one.
 
