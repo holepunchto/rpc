@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/hyperswarm/rpc#readme",
   "dependencies": {
-    "@hyperswarm/dht": "^6.0.1",
+    "hyperdht": "^6.5.2",
     "protomux-rpc": "^1.3.0"
   },
   "devDependencies": {

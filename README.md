@@ -61,11 +61,11 @@ If a DHT instance was passed when constructing the RPC instance, this DHT will *
 
 #### `const client = rpc.connect(publicKey[, options])`
 
-Options are the same as [`dht.connect()`](https://github.com/hyperswarm/dht#const-encryptedconnection--nodeconnectremotepublickey-options).
+Options are the same as [`dht.connect()`](https://github.com/holepunchto/hyperdht#const-encryptedconnection--nodeconnectremotepublickey-options).
 
 #### `client.dht`
 
-The [`DHT`](https://github.com/hyperswarm/dht#api) instance used by the client.
+The [`DHT`](https://github.com/holepunchto/hyperdht#api) instance used by the client.
 
 #### `client.rpc`
 
@@ -138,11 +138,11 @@ Emitted when the RPC channel is destroyed, i.e. after `close` when all pending p
 
 Create a new RPC server for responding to requests.
 
-Options are the same as [`dht.createServer()`](https://github.com/hyperswarm/dht#const-server--nodecreateserveroptions-onconnection).
+Options are the same as [`dht.createServer()`](https://github.com/holepunchto/hyperdht#const-server--nodecreateserveroptions-onconnection).
 
 #### `server.dht`
 
-The [`DHT`](https://github.com/hyperswarm/dht#api) instance used by the server.
+The [`DHT`](https://github.com/holepunchto/hyperdht#api) instance used by the server.
 
 #### `await server.listen([keyPair])`
 

@@ -1,5 +1,5 @@
 import test from 'brittle'
-import DHT from '@hyperswarm/dht'
+import DHT from 'hyperdht'
 import createTestnet from '@hyperswarm/testnet'
 import { string } from 'compact-encoding'
 
