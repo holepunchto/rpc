@@ -1,5 +1,5 @@
 const EventEmitter = require('events')
-const DHT = require('@hyperswarm/dht')
+const DHT = require('hyperdht')
 const ProtomuxRPC = require('protomux-rpc')
 
 module.exports = class HyperswarmRPC {
