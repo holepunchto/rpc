@@ -1,6 +1,9 @@
 const EventEmitter = require('events')
 const DHT = require('hyperdht')
 const ProtomuxRPC = require('protomux-rpc')
+const b4a = require('b4a')
+
+const POOL_LINGER = 10000
 
 module.exports = class HyperswarmRPC {
   constructor (options = {}) {
@@ -20,6 +23,9 @@ module.exports = class HyperswarmRPC {
 
     this._clients = new Set()
     this._servers = new Set()
+
+    this._pool = new Map()
+    this._timeouts = new Set()
   }
 
   get dht () {
@@ -42,6 +48,30 @@ module.exports = class HyperswarmRPC {
     server.on('close', () => this._servers.delete(server))
 
     return server
+  }
+
+  async request (publicKey, method, value, options) {
+    const ref = this._getCachedClient(publicKey, options)
+
+    ref.active()
+
+    try {
+      return ref.client.request(method, value, options)
+    } finally {
+      await ref.inactive()
+    }
+  }
+
+  async event (publicKey, method, value, options) {
+    const ref = this._getCachedClient(publicKey, options)
+
+    ref.active()
+
+    try {
+      await ref.client.event(method, value, options)
+    } finally {
+      ref.inactive()
+    }
   }
 
   connect (publicKey, options = {}) {
@@ -73,7 +103,63 @@ module.exports = class HyperswarmRPC {
       client.destroy()
     }
 
+    for (const ref of this._pool.values()) {
+      ref.destroy()
+    }
+
     if (this._autoDestroy) await this._dht.destroy()
+  }
+
+  _getCachedClient (publicKey, options) {
+    const id = b4a.toString(publicKey, 'hex')
+    let ref = this._pool.get(id)
+
+    if (ref) return ref
+
+    ref = new ClientRef(this.connect(publicKey, options), () => {
+      this._pool.delete(id)
+      ref.destroy()
+    })
+
+    this._pool.set(id, ref)
+
+    return ref
+  }
+}
+
+class ClientRef {
+  constructor (client, oninactive) {
+    this.activity = 0
+    this.client = client
+    this.oninactive = oninactive
+    this.timeout = null
+    this.client.on('close', oninactive)
+  }
+
+  clear () {
+    if (this.timeout) clearTimeout(this.timeout)
+    this.timeout = null
+  }
+
+  destroy () {
+    if (this.destroyed) return
+    this.clear()
+    this.destroyed = true
+    this.client.destroy()
+  }
+
+  active () {
+    if (this.destroyed) return
+    this.clear()
+    this.activity++
+  }
+
+  inactive () {
+    if (this.destroyed) return
+    this.activity--
+    if (this.activity === 0) {
+      this.timeout = setTimeout(this.oninactive, POOL_LINGER)
+    }
   }
 }
 
