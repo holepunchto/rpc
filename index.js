@@ -62,13 +62,13 @@ module.exports = class HyperswarmRPC {
     }
   }
 
-  async event (publicKey, method, value, options) {
+  event (publicKey, method, value, options) {
     const ref = this._getCachedClient(publicKey, options)
 
     ref.active()
 
     try {
-      await ref.client.event(method, value, options)
+      ref.client.event(method, value, options)
     } finally {
       ref.inactive()
     }
