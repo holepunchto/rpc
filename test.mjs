@@ -1,6 +1,6 @@
 import test from 'brittle'
 import DHT from 'hyperdht'
-import createTestnet from '@hyperswarm/testnet'
+import createTestnet from 'hyperdht/testnet.js'
 import { string } from 'compact-encoding'
 
 import RPC from './index.js'
