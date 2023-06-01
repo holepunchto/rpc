@@ -132,6 +132,16 @@ Emitted when the RPC channel closes, i.e. when the remote side closes or rejects
 
 Emitted when the RPC channel is destroyed, i.e. after `close` when all pending promises has resolved.
 
+### Requesting without clients
+
+#### `const response = await rpc.request(publicKey, method, value[, options])`
+
+Same as `client.request` but allocates a client in the internal pool that is auto closed after 10s of inactivity or rpc destruction.
+
+#### `rpc.event(publicKey, method, value[, options])`
+
+Same as `client.event` but allocates a client in the internal pool that is auto closed after 10s of inactivity or rpc destruction.
+
 ### Creating servers
 
 #### `const server = rpc.createServer([options])`
