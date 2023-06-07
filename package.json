@@ -14,7 +14,7 @@
     "url": "git+https://github.com/holepunchto/rpc.git"
   },
   "author": "Kasper Isager Dalsgarð <kasper@funktionel.co>",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/holepunchto/rpc/issues"
   },
