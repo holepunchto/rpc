@@ -209,4 +209,4 @@ Emitted when the server is fully closed.
 
 ## License
 
-ISC
+Apache-2.0
