@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hyperswarm/rpc.git"
+    "url": "git+https://github.com/holepunchto/rpc.git"
   },
   "author": "Kasper Isager Dalsgarð <kasper@funktionel.co>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/hyperswarm/rpc/issues"
+    "url": "https://github.com/holepunchto/rpc/issues"
   },
-  "homepage": "https://github.com/hyperswarm/rpc#readme",
+  "homepage": "https://github.com/holepunchto/rpc#readme",
   "dependencies": {
     "b4a": "^1.6.4",
     "hyperdht": "^6.6.0",
