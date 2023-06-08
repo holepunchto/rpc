@@ -162,7 +162,7 @@ Make the server listen on a key pair, defaulting to `rpc.defaultKeyPair`. To con
 
 Register a handler for an RPC method. The handler has the signature `handler(request, rpc)` and must either return the response value or throw an error. `rpc` is a [`ProtomuxRPC`](https://github.com/holepunchto/protomux-rpc#api) instance.
 
-Note that `rpc.stream` is a [`HyperswarmSecretStream`](https://github.com/holepunchto/hyperswarm-secret-stream) instance, from which you can get information about the connection. For example, `rpc.stream.remotePublicKey` returns the public key of the initiator of the requester.
+Note that `rpc.stream` is a [`HyperswarmSecretStream`](https://github.com/holepunchto/hyperswarm-secret-stream) instance, from which you can get information about the connection. For example, `rpc.stream.remotePublicKey` returns the public key of the initiator of the request.
 
 Only a single handler may be active for any given method; any previous handler is overwritten when registering a new one.
 
