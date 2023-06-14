@@ -11,7 +11,8 @@ jobs:
     strategy:
       matrix:
         node-version: [lts/*]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # windows and particularly macos CI are very expensive on github, so skipping
+        os: [ubuntu-latest] #, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
