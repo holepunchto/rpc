@@ -178,7 +178,7 @@ class Client extends EventEmitter {
 
     this._stream = this._dht.connect(publicKey, { nodes, keyPair })
     this._stream.setKeepAlive(5000)
-    
+
     this._rpc = new ProtomuxRPC(this._stream, {
       id: publicKey,
       valueEncoding: this._defaultValueEncoding
