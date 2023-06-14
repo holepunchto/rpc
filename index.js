@@ -177,7 +177,8 @@ class Client extends EventEmitter {
     this._publicKey = publicKey
 
     this._stream = this._dht.connect(publicKey, { nodes, keyPair })
-
+    this._stream.setKeepAlive(5000)
+    
     this._rpc = new ProtomuxRPC(this._stream, {
       id: publicKey,
       valueEncoding: this._defaultValueEncoding
@@ -283,6 +284,7 @@ class Server extends EventEmitter {
 
     // For Hypercore replication
     stream.userData = rpc.mux
+    stream.setKeepAlive(5000)
 
     this._connections.add(rpc)
     rpc.on('close', () => {
