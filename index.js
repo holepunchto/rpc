@@ -233,6 +233,23 @@ class Client extends EventEmitter {
     this._rpc.event(method, value, options)
   }
 
+  respond (method, options, handler) {
+    if (handler === undefined) {
+      handler = options
+      options = {}
+    }
+
+    this._rpc.respond(method, options, wrap(handler, this._rpc))
+
+    return this
+  }
+
+  unrespond (method) {
+    this._rpc.unrespond(method)
+
+    return this
+  }
+
   async end () {
     await this._rpc.end()
   }

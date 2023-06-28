@@ -266,3 +266,34 @@ test('mux additional channel over connection', async (t) => {
     return message
   }
 })
+
+test('client respond and unrespond', async (t) => {
+  const [dht] = await createTestnet(3, t.teardown)
+
+  const rpc = new RPC({ dht })
+
+  const server = rpc.createServer()
+  await server.listen()
+
+  const client = rpc.connect(server.publicKey)
+  await new Promise(resolve => client.once('open', resolve))
+
+  client.respond('echo', (req) => req)
+
+  for (const rpc of server.connections) {
+    t.alike(await rpc.request('echo', Buffer.from('hello')), Buffer.from('hello'))
+  }
+
+  client.unrespond('echo')
+
+  for (const rpc of server.connections) {
+    try {
+      await rpc.request('echo', Buffer.from('hello'))
+      t.fail('Should have failed')
+    } catch (err) {
+      t.ok(err.message.startsWith('unknown method'))
+    }
+  }
+
+  await rpc.destroy()
+})

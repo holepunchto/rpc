@@ -104,6 +104,14 @@ Perform an RPC request but don't wait for a response.
 
 Options are the same as `client.request()`.
 
+#### `client.respond(method[, options], handler)`
+
+Register a handler for an RPC method.
+
+#### `client.unrespond(method)`
+
+Remove a handler for an RPC method.
+
 #### `client.cork()`
 
 Cork the underlying channel. See [`channel.cork()`](https://github.com/mafintosh/protomux#channelcork) for more information.
