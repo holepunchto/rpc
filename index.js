@@ -167,16 +167,11 @@ class Client extends EventEmitter {
   constructor (dht, defaultValueEncoding, publicKey, options = {}) {
     super()
 
-    const {
-      nodes,
-      keyPair
-    } = options
-
     this._dht = dht
     this._defaultValueEncoding = defaultValueEncoding
     this._publicKey = publicKey
 
-    this._stream = this._dht.connect(publicKey, { nodes, keyPair })
+    this._stream = this._dht.connect(publicKey, options)
     this._stream.setKeepAlive(5000)
 
     this._rpc = new ProtomuxRPC(this._stream, {
@@ -246,11 +241,6 @@ class Server extends EventEmitter {
   constructor (dht, defaultKeyPair, defaultValueEncoding, options = {}) {
     super()
 
-    const {
-      firewall,
-      holepunch
-    } = options
-
     this._dht = dht
     this._defaultKeyPair = defaultKeyPair
     this._defaultValueEncoding = defaultValueEncoding
@@ -258,7 +248,7 @@ class Server extends EventEmitter {
     this._connections = new Set()
     this._responders = new Map()
 
-    this._server = this._dht.createServer({ firewall, holepunch })
+    this._server = this._dht.createServer(options)
     this._server
       .on('close', this._onclose.bind(this))
       .on('listening', this._onlistening.bind(this))
