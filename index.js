@@ -14,7 +14,7 @@ module.exports = class HyperswarmRPC {
       bootstrap,
       debug,
       dht,
-      poolLinger
+      poolLinger = POOL_LINGER
     } = options
 
     this._dht = dht || new DHT({ keyPair, bootstrap, debug })
@@ -117,10 +117,10 @@ module.exports = class HyperswarmRPC {
 
     if (ref) return ref
 
-    ref = new ClientRef(this.connect(publicKey, options), () => {
+    ref = new ClientRef(this.connect(publicKey, options), this._poolLinger, () => {
       this._pool.delete(id)
       ref.destroy()
-    }, this._poolLinger)
+    })
 
     this._pool.set(id, ref)
 
@@ -129,11 +129,11 @@ module.exports = class HyperswarmRPC {
 }
 
 class ClientRef {
-  constructor (client, oninactive, poolLinger) {
+  constructor (client, poolLinger, oninactive) {
     this.activity = 0
     this.client = client
+    this.poolLinger = poolLinger
     this.oninactive = oninactive
-    this.poolLinger = poolLinger || POOL_LINGER
     this.timeout = null
     this.client.on('close', oninactive)
   }
