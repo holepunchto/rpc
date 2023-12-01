@@ -118,7 +118,7 @@ module.exports = class HyperswarmRPC {
     if (ref) return ref
 
     ref = new ClientRef(this.connect(publicKey, options), this._poolLinger, () => {
-      this._pool.delete(id)
+      if (this._pool.get(id) === ref) this._pool.delete(id)
       ref.destroy()
     })
 
