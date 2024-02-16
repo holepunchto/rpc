@@ -9,6 +9,12 @@
   "scripts": {
     "test": "standard && brittle test.mjs"
   },
+  "imports": {
+    "events": {
+      "bare": "bare-events",
+      "default": "events"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/holepunchto/rpc.git"
@@ -23,6 +29,9 @@
     "b4a": "^1.6.4",
     "hyperdht": "^6.6.0",
     "protomux-rpc": "^1.3.0"
+  },
+  "optionalDependencies": {
+    "bare-events": "^2.2.0"
   },
   "devDependencies": {
     "brittle": "^3.0.0",
