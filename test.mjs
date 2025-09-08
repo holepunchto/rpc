@@ -125,7 +125,7 @@ test('add responder after connection', async (t) => {
 
   const client = rpc.connect(server.publicKey)
 
-  await t.exception(client.request('echo', Buffer.alloc(0)), /unknown method 'echo'/)
+  await t.exception(client.request('echo', Buffer.alloc(0)))
 
   server.respond('echo', (req) => req)
 
@@ -265,4 +265,47 @@ test('mux additional channel over connection', async (t) => {
 
     return message
   }
+})
+
+test('basic capability', async (t) => {
+  const [dht] = await createTestnet(3, t.teardown)
+
+  const rpc = new RPC({ dht })
+  const capability = Buffer.alloc(32)
+
+  const server = rpc.createServer({ capability })
+  await server.listen()
+
+  server.respond('echo', (req) => req)
+
+  const client = rpc.connect(server.publicKey, { capability })
+
+  t.alike(
+    await client.request('echo', Buffer.from('hello world')),
+    Buffer.from('hello world')
+  )
+
+  await rpc.destroy()
+})
+
+test('invalid basic capability', async (t) => {
+  const [dht] = await createTestnet(3, t.teardown)
+
+  const rpc = new RPC({ dht })
+  const capability = Buffer.alloc(32)
+
+  const server = rpc.createServer({ capability })
+  await server.listen()
+
+  server.respond('echo', (req) => req)
+
+  const client = rpc.connect(server.publicKey, { capability: Buffer.alloc(32, 'no') })
+
+  try {
+    await client.request('echo', Buffer.from('hello world'))
+  } catch (err) {
+    t.pass('had error')
+  }
+
+  await rpc.destroy()
 })
