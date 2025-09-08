@@ -7,7 +7,6 @@ const { getEncoding } = require('./spec/hyperschema')
 
 const POOL_LINGER = 10000
 const Handshake = getEncoding('@rpc/handshake')
-const cap = new HyperswarmCapability()
 
 module.exports = class HyperswarmRPC {
   constructor (options = {}) {
@@ -18,6 +17,8 @@ module.exports = class HyperswarmRPC {
       bootstrap,
       debug,
       dht,
+      namespace,
+      capability = new HyperswarmCapability(namespace),
       poolLinger = POOL_LINGER
     } = options
 
@@ -25,6 +26,7 @@ module.exports = class HyperswarmRPC {
     this._defaultKeyPair = keyPair
     this._defaultValueEncoding = valueEncoding
     this._autoDestroy = !dht
+    this._cap = capability
     this._poolLinger = poolLinger
 
     this._clients = new Set()
@@ -44,6 +46,7 @@ module.exports = class HyperswarmRPC {
   createServer (options = {}) {
     const server = new Server(
       this._dht,
+      this._cap,
       this._defaultKeyPair,
       this._defaultValueEncoding,
       options
@@ -82,6 +85,7 @@ module.exports = class HyperswarmRPC {
   connect (publicKey, options = {}) {
     const client = new Client(
       this._dht,
+      this._cap,
       this._defaultValueEncoding,
       publicKey,
       options
@@ -170,10 +174,11 @@ class ClientRef {
 }
 
 class Client extends EventEmitter {
-  constructor (dht, defaultValueEncoding, publicKey, options = {}) {
+  constructor (dht, cap, defaultValueEncoding, publicKey, options = {}) {
     super()
 
     this._dht = dht
+    this._cap = cap
     this._defaultValueEncoding = defaultValueEncoding
     this._publicKey = publicKey
     this._capability = options.capability || null
@@ -198,7 +203,7 @@ class Client extends EventEmitter {
       id: this._publicKey,
       valueEncoding: this._defaultValueEncoding,
       handshakeEncoding: Handshake,
-      handshake: this._capability ? { capability: cap.generate(this._stream, this._capability) } : null
+      handshake: this._capability ? { capability: this._cap.generate(this._stream, this._capability) } : null
     })
     this._rpc
       .on('open', this._onopen.bind(this))
@@ -210,7 +215,7 @@ class Client extends EventEmitter {
   }
 
   _onopen (handshake) {
-    if (this._capability && (!handshake.capability || !cap.verify(this._stream, this._capability, handshake.capability))) {
+    if (this._capability && (!handshake.capability || !this._cap.verify(this._stream, this._capability, handshake.capability))) {
       this.destroy(new Error('Remote sent invalid capability'))
       return
     }
@@ -248,7 +253,7 @@ class Client extends EventEmitter {
 
   async request (method, value, options = {}) {
     if (!this._rpc) await this._stream.opened
-    if (!this._rpc) throw new Error('Client closed')
+    if (this.closed) throw new Error('RPC client closed')
     return this._rpc.request(method, value, options)
   }
 
@@ -274,10 +279,11 @@ class Client extends EventEmitter {
 }
 
 class Server extends EventEmitter {
-  constructor (dht, defaultKeyPair, defaultValueEncoding, options = {}) {
+  constructor (dht, cap, defaultKeyPair, defaultValueEncoding, options = {}) {
     super()
 
     this._dht = dht
+    this._cap = cap
     this._defaultKeyPair = defaultKeyPair
     this._capability = options.capability || null
     this._defaultValueEncoding = defaultValueEncoding
@@ -308,7 +314,7 @@ class Server extends EventEmitter {
       id: this.publicKey,
       valueEncoding: this._defaultValueEncoding,
       handshakeEncoding: Handshake,
-      handshake: this._capability ? { capability: cap.generate(stream, this._capability) } : null
+      handshake: this._capability ? { capability: this._cap.generate(stream, this._capability) } : null
     })
 
     // For Hypercore replication
@@ -317,7 +323,7 @@ class Server extends EventEmitter {
 
     this._connections.add(rpc)
     rpc.on('open', (handshake) => {
-      if (this._capability && (!handshake.capability || !cap.verify(stream, this._capability, handshake.capability))) {
+      if (this._capability && (!handshake.capability || !this._cap.verify(stream, this._capability, handshake.capability))) {
         rpc.destroy(new Error('Remote sent invalid capability'))
       }
     })
