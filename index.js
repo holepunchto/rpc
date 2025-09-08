@@ -1,9 +1,13 @@
 const EventEmitter = require('events')
 const DHT = require('hyperdht')
 const ProtomuxRPC = require('protomux-rpc')
+const HyperswarmCapability = require('hyperswarm-capability')
 const b4a = require('b4a')
+const { getEncoding } = require('./spec/hyperschema')
 
 const POOL_LINGER = 10000
+const Handshake = getEncoding('@rpc/handshake')
+const cap = new HyperswarmCapability()
 
 module.exports = class HyperswarmRPC {
   constructor (options = {}) {
@@ -172,13 +176,29 @@ class Client extends EventEmitter {
     this._dht = dht
     this._defaultValueEncoding = defaultValueEncoding
     this._publicKey = publicKey
+    this._capability = options.capability || null
 
     this._stream = this._dht.connect(publicKey, options)
     this._stream.setKeepAlive(5000)
+    this._rpc = null
+    this._closed = false
 
+    if (this._capability) this._openStreamAndRPC()
+    else this._openRPC()
+  }
+
+  async _openStreamAndRPC () {
+    await this._stream.opened
+    if (this._stream.destroying || this._closed) return
+    this._openRPC()
+  }
+
+  _openRPC () {
     this._rpc = new ProtomuxRPC(this._stream, {
-      id: publicKey,
-      valueEncoding: this._defaultValueEncoding
+      id: this._publicKey,
+      valueEncoding: this._defaultValueEncoding,
+      handshakeEncoding: Handshake,
+      handshake: this._capability ? { capability: cap.generate(this._stream, this._capability) } : null
     })
     this._rpc
       .on('open', this._onopen.bind(this))
@@ -189,7 +209,11 @@ class Client extends EventEmitter {
     this._stream.userData = this._rpc.mux
   }
 
-  _onopen () {
+  _onopen (handshake) {
+    if (this._capability && (!handshake.capability || !cap.verify(this._stream, this._capability, handshake.capability))) {
+      this.destroy(new Error('Remote sent invalid capability'))
+      return
+    }
     this.emit('open')
   }
 
@@ -211,31 +235,41 @@ class Client extends EventEmitter {
   }
 
   get closed () {
-    return this._rpc.closed
+    return this._closed || this._rpc.closed
   }
 
   get mux () {
-    return this._rpc.mux
+    return this._rpc && this._rpc.mux
   }
 
   get stream () {
-    return this._rpc.stream
+    return this._rpc && this._rpc.stream
   }
 
   async request (method, value, options = {}) {
+    if (!this._rpc) await this._stream.opened
+    if (!this._rpc) throw new Error('Client closed')
     return this._rpc.request(method, value, options)
   }
 
+  async _openAndEvent (method, value, options = {}) {
+    await this._stream.opened
+    if (this._rpc) this._rpc.event(method, value, options)
+  }
+
   event (method, value, options = {}) {
-    this._rpc.event(method, value, options)
+    if (!this._rpc) this._openAndEvent(method, value, options)
+    else this._rpc.event(method, value, options)
   }
 
   async end () {
-    await this._rpc.end()
+    if (!this._rpc) await this._stream.opened
+    if (this._rpc) await this._rpc.end()
   }
 
   destroy (err) {
-    this._rpc.destroy(err)
+    this._closed = true
+    if (this._rpc) this._rpc.destroy(err)
   }
 }
 
@@ -245,6 +279,7 @@ class Server extends EventEmitter {
 
     this._dht = dht
     this._defaultKeyPair = defaultKeyPair
+    this._capability = options.capability || null
     this._defaultValueEncoding = defaultValueEncoding
 
     this._connections = new Set()
@@ -271,7 +306,9 @@ class Server extends EventEmitter {
   _onconnection (stream) {
     const rpc = new ProtomuxRPC(stream, {
       id: this.publicKey,
-      valueEncoding: this._defaultValueEncoding
+      valueEncoding: this._defaultValueEncoding,
+      handshakeEncoding: Handshake,
+      handshake: this._capability ? { capability: cap.generate(stream, this._capability) } : null
     })
 
     // For Hypercore replication
@@ -279,6 +316,11 @@ class Server extends EventEmitter {
     stream.setKeepAlive(5000)
 
     this._connections.add(rpc)
+    rpc.on('open', (handshake) => {
+      if (this._capability && (!handshake.capability || !cap.verify(stream, this._capability, handshake.capability))) {
+        rpc.destroy(new Error('Remote sent invalid capability'))
+      }
+    })
     rpc.on('close', () => {
       stream.destroy()
       this._connections.delete(rpc)

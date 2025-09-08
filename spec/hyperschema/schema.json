@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "schema": [
+    {
+      "name": "handshake",
+      "namespace": "rpc",
+      "compact": false,
+      "flagsPosition": 0,
+      "fields": [
+        {
+          "name": "capability",
+          "type": "fixed32",
+          "version": 1
+        }
+      ]
+    }
+  ]
+}
