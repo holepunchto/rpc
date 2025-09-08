@@ -30,6 +30,7 @@
     "b4a": "^1.6.4",
     "hyperdht": "^6.6.0",
     "hyperschema": "^1.14.0",
+    "hyperswarm-capability": "^1.0.3",
     "protomux-rpc": "^1.3.0"
   },
   "optionalDependencies": {
