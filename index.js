@@ -241,7 +241,7 @@ class Client extends EventEmitter {
   }
 
   get closed () {
-    return this._closed || this._rpc.closed
+    return this._closed || !this._rpc || this._rpc.closed
   }
 
   get mux () {
