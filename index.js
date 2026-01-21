@@ -184,7 +184,7 @@ class Client extends EventEmitter {
     this._capability = options.capability || null
 
     this._stream = this._dht.connect(publicKey, options)
-    this._stream.on('error', noop) // Errors are implicitly handled internally, with the retries
+    this._stream.on('error', noop)
 
     this._rpc = null
     this._closed = false
@@ -311,7 +311,7 @@ class Server extends EventEmitter {
   }
 
   _onconnection (stream) {
-    stream.on('error', noop) // Errors are handled implicitly by the client, who will retry as needed
+    stream.on('error', noop)
 
     const rpc = new ProtomuxRPC(stream, {
       id: this.publicKey,
