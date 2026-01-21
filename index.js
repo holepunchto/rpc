@@ -184,7 +184,8 @@ class Client extends EventEmitter {
     this._capability = options.capability || null
 
     this._stream = this._dht.connect(publicKey, options)
-    this._stream.setKeepAlive(5000)
+    this._stream.on('error', noop)
+
     this._rpc = null
     this._closed = false
 
@@ -240,7 +241,7 @@ class Client extends EventEmitter {
   }
 
   get closed () {
-    return this._closed || this._rpc.closed
+    return this._closed || !this._rpc || this._rpc.closed
   }
 
   get mux () {
@@ -310,6 +311,8 @@ class Server extends EventEmitter {
   }
 
   _onconnection (stream) {
+    stream.on('error', noop)
+
     const rpc = new ProtomuxRPC(stream, {
       id: this.publicKey,
       valueEncoding: this._defaultValueEncoding,
@@ -319,7 +322,6 @@ class Server extends EventEmitter {
 
     // For Hypercore replication
     stream.userData = rpc.mux
-    stream.setKeepAlive(5000)
 
     this._connections.add(rpc)
     rpc.on('open', (handshake) => {
@@ -396,3 +398,5 @@ class Server extends EventEmitter {
 function wrap (handler, rpc) {
   return (request) => handler(request, rpc)
 }
+
+function noop () {}
