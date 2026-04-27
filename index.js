@@ -19,10 +19,11 @@ module.exports = class HyperswarmRPC {
       dht,
       namespace,
       capability = new HyperswarmCapability(namespace),
-      poolLinger = POOL_LINGER
+      poolLinger = POOL_LINGER,
+      port
     } = options
 
-    this._dht = dht || new DHT({ keyPair, bootstrap, debug })
+    this._dht = dht || new DHT({ keyPair, bootstrap, debug, port })
     this._defaultKeyPair = keyPair
     this._defaultValueEncoding = valueEncoding
     this._autoDestroy = !dht
