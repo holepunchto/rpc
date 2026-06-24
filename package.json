@@ -3,8 +3,11 @@
   "version": "3.5.0",
   "description": "RPC over the Hyperswarm DHT",
   "main": "index.js",
+  "types": "index.d.ts",
   "files": [
     "index.js",
+    "index.d.ts",
+    "spec/hyperschema/*.d.ts",
     "spec/hyperschema/*.js"
   ],
   "scripts": {
