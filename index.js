@@ -196,7 +196,12 @@ class Client extends EventEmitter {
 
   async _openStreamAndRPC () {
     await this._stream.opened
-    if (this._stream.destroying || this._closed) return
+    if (this._stream.destroying || this._closed) {
+      this._closed = true
+      this._stream.destroy()
+      this.emit('close')
+      return
+    }
     this._openRPC()
   }
 
@@ -277,6 +282,7 @@ class Client extends EventEmitter {
   destroy (err) {
     this._closed = true
     if (this._rpc) this._rpc.destroy(err)
+    else this._stream.destroy(err)
   }
 }
 

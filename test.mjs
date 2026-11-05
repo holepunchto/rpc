@@ -309,3 +309,43 @@ test('invalid basic capability', async (t) => {
 
   await rpc.destroy()
 })
+
+test('pooled client with capability recovers once the peer comes up', async (t) => {
+  const [dht] = await createTestnet(3, t.teardown)
+
+  const rpc = new RPC({ dht })
+  const capability = Buffer.alloc(32)
+  const keyPair = DHT.keyPair()
+
+  // nobody listens on this key yet, so the pooled client's stream never opens
+  await t.exception(rpc.request(keyPair.publicKey, 'echo', Buffer.from('one'), { capability }))
+
+  const server = rpc.createServer({ capability })
+  await server.listen(keyPair)
+  server.respond('echo', (req) => req)
+
+  t.alike(
+    await rpc.request(keyPair.publicKey, 'echo', Buffer.from('two'), { capability }),
+    Buffer.from('two')
+  )
+
+  await rpc.destroy()
+})
+
+test('destroy before the stream opens closes the client and its stream', async (t) => {
+  const [dht] = await createTestnet(3, t.teardown)
+
+  const rpc = new RPC({ dht })
+  const capability = Buffer.alloc(32)
+
+  const client = rpc.connect(DHT.keyPair().publicKey, { capability })
+  const closed = new Promise((resolve) => client.once('close', resolve))
+
+  client.destroy()
+  await closed
+
+  t.ok(client.closed)
+  t.ok(client._stream.destroying || client._stream.destroyed)
+
+  await rpc.destroy()
+})
