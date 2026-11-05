@@ -17,10 +17,7 @@ test('basic', async (t) => {
 
   const client = rpc.connect(server.publicKey)
 
-  t.alike(
-    await client.request('echo', Buffer.from('hello world')),
-    Buffer.from('hello world')
-  )
+  t.alike(await client.request('echo', Buffer.from('hello world')), Buffer.from('hello world'))
 
   await rpc.destroy()
 })
@@ -40,10 +37,7 @@ test('default encoding', async (t) => {
 
   const client = rpc.connect(server.publicKey)
 
-  t.alike(
-    await client.request('echo', 'hello world'),
-    'hello world'
-  )
+  t.alike(await client.request('echo', 'hello world'), 'hello world')
 
   await rpc.destroy()
 })
@@ -252,7 +246,7 @@ test('mux additional channel over connection', async (t) => {
   await io
   await rpc.destroy()
 
-  function setup (mux) {
+  function setup(mux) {
     const channel = mux.createChannel({
       protocol: 'test'
     })
@@ -280,10 +274,7 @@ test('basic capability', async (t) => {
 
   const client = rpc.connect(server.publicKey, { capability })
 
-  t.alike(
-    await client.request('echo', Buffer.from('hello world')),
-    Buffer.from('hello world')
-  )
+  t.alike(await client.request('echo', Buffer.from('hello world')), Buffer.from('hello world'))
 
   await rpc.destroy()
 })
