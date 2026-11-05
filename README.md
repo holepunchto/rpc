@@ -38,7 +38,7 @@ Options include:
   // A Noise keypair that will be used by default to listen/connect on the DHT.
   // Defaults to a new key pair.
   keyPair,
-  // A unique, 32-byte, random seed that can be used to deterministically 
+  // A unique, 32-byte, random seed that can be used to deterministically
   // generate the key pair.
   seed: buffer,
   // Optionally overwrite the default bootstrap servers. Not used if a DHT
@@ -55,7 +55,7 @@ Fully destroy this RPC instance.
 
 This will also close any running servers. If you want to force close the instance without waiting for the servers to close pass `{ force: true }`.
 
-If a DHT instance was passed when constructing the RPC instance, this DHT will *not* be destroyed; the RPC instance will only destroy DHT instances that it itself has constructed.
+If a DHT instance was passed when constructing the RPC instance, this DHT will _not_ be destroyed; the RPC instance will only destroy DHT instances that it itself has constructed.
 
 ### Creating clients
 
@@ -189,7 +189,7 @@ Stop listening.
 
 Returns an object containing the address of the server:
 
-```js
+```
 {
   host, // External IP of the server,
   port, // External port of the server if predictable,

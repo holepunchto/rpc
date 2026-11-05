@@ -9,7 +9,7 @@ const POOL_LINGER = 10000
 const Handshake = getEncoding('@rpc/handshake')
 
 module.exports = class HyperswarmRPC {
-  constructor (options = {}) {
+  constructor(options = {}) {
     const {
       valueEncoding,
       seed,
@@ -36,15 +36,15 @@ module.exports = class HyperswarmRPC {
     this._pool = new Map()
   }
 
-  get dht () {
+  get dht() {
     return this._dht
   }
 
-  get defaultKeyPair () {
+  get defaultKeyPair() {
     return this._defaultKeyPair
   }
 
-  createServer (options = {}) {
+  createServer(options = {}) {
     const server = new Server(
       this._dht,
       this._cap,
@@ -59,7 +59,7 @@ module.exports = class HyperswarmRPC {
     return server
   }
 
-  async request (publicKey, method, value, options) {
+  async request(publicKey, method, value, options) {
     const ref = this._getCachedClient(publicKey, options)
 
     ref.active()
@@ -71,7 +71,7 @@ module.exports = class HyperswarmRPC {
     }
   }
 
-  event (publicKey, method, value, options) {
+  event(publicKey, method, value, options) {
     const ref = this._getCachedClient(publicKey, options)
 
     ref.active()
@@ -83,14 +83,8 @@ module.exports = class HyperswarmRPC {
     }
   }
 
-  connect (publicKey, options = {}) {
-    const client = new Client(
-      this._dht,
-      this._cap,
-      this._defaultValueEncoding,
-      publicKey,
-      options
-    )
+  connect(publicKey, options = {}) {
+    const client = new Client(this._dht, this._cap, this._defaultValueEncoding, publicKey, options)
 
     this._clients.add(client)
     client.on('close', () => this._clients.delete(client))
@@ -98,7 +92,7 @@ module.exports = class HyperswarmRPC {
     return client
   }
 
-  async destroy (options = {}) {
+  async destroy(options = {}) {
     if (!options.force) {
       const closing = []
 
@@ -120,7 +114,7 @@ module.exports = class HyperswarmRPC {
     if (this._autoDestroy) await this._dht.destroy()
   }
 
-  _getCachedClient (publicKey, options) {
+  _getCachedClient(publicKey, options) {
     const id = b4a.toString(publicKey, 'hex')
     let ref = this._pool.get(id)
 
@@ -138,7 +132,7 @@ module.exports = class HyperswarmRPC {
 }
 
 class ClientRef {
-  constructor (client, poolLinger, oninactive) {
+  constructor(client, poolLinger, oninactive) {
     this.activity = 0
     this.client = client
     this.poolLinger = poolLinger
@@ -147,25 +141,25 @@ class ClientRef {
     this.client.on('close', oninactive)
   }
 
-  clear () {
+  clear() {
     if (this.timeout) clearTimeout(this.timeout)
     this.timeout = null
   }
 
-  destroy () {
+  destroy() {
     if (this.destroyed) return
     this.clear()
     this.destroyed = true
     this.client.destroy()
   }
 
-  active () {
+  active() {
     if (this.destroyed) return
     this.clear()
     this.activity++
   }
 
-  inactive () {
+  inactive() {
     if (this.destroyed) return
     this.activity--
     if (this.activity === 0) {
@@ -175,7 +169,7 @@ class ClientRef {
 }
 
 class Client extends EventEmitter {
-  constructor (dht, cap, defaultValueEncoding, publicKey, options = {}) {
+  constructor(dht, cap, defaultValueEncoding, publicKey, options = {}) {
     super()
 
     this._dht = dht
@@ -194,7 +188,7 @@ class Client extends EventEmitter {
     else this._openRPC()
   }
 
-  async _openStreamAndRPC () {
+  async _openStreamAndRPC() {
     await this._stream.opened
     if (this._stream.destroying || this._closed) {
       this._closed = true
@@ -205,12 +199,14 @@ class Client extends EventEmitter {
     this._openRPC()
   }
 
-  _openRPC () {
+  _openRPC() {
     this._rpc = new ProtomuxRPC(this._stream, {
       id: this._publicKey,
       valueEncoding: this._defaultValueEncoding,
       handshakeEncoding: Handshake,
-      handshake: this._capability ? { capability: this._cap.generate(this._stream, this._capability) } : null
+      handshake: this._capability
+        ? { capability: this._cap.generate(this._stream, this._capability) }
+        : null
     })
     this._rpc
       .on('open', this._onopen.bind(this))
@@ -221,65 +217,69 @@ class Client extends EventEmitter {
     this._stream.userData = this._rpc.mux
   }
 
-  _onopen (handshake) {
-    if (this._capability && (!handshake.capability || !this._cap.verify(this._stream, this._capability, handshake.capability))) {
+  _onopen(handshake) {
+    if (
+      this._capability &&
+      (!handshake.capability ||
+        !this._cap.verify(this._stream, this._capability, handshake.capability))
+    ) {
       this.destroy(new Error('Remote sent invalid capability'))
       return
     }
     this.emit('open')
   }
 
-  _onclose () {
+  _onclose() {
     this._stream.destroy()
     this.emit('close')
   }
 
-  _ondestroy () {
+  _ondestroy() {
     this.emit('destroy')
   }
 
-  get dht () {
+  get dht() {
     return this._dht
   }
 
-  get rpc () {
+  get rpc() {
     return this._rpc
   }
 
-  get closed () {
+  get closed() {
     return this._closed || !this._rpc || this._rpc.closed
   }
 
-  get mux () {
+  get mux() {
     return this._rpc && this._rpc.mux
   }
 
-  get stream () {
+  get stream() {
     return this._rpc && this._rpc.stream
   }
 
-  async request (method, value, options = {}) {
+  async request(method, value, options = {}) {
     if (!this._rpc) await this._stream.opened
     if (this.closed) throw new Error('RPC client closed')
     return this._rpc.request(method, value, options)
   }
 
-  async _openAndEvent (method, value, options = {}) {
+  async _openAndEvent(method, value, options = {}) {
     await this._stream.opened
     if (this._rpc) this._rpc.event(method, value, options)
   }
 
-  event (method, value, options = {}) {
+  event(method, value, options = {}) {
     if (!this._rpc) this._openAndEvent(method, value, options)
     else this._rpc.event(method, value, options)
   }
 
-  async end () {
+  async end() {
     if (!this._rpc) await this._stream.opened
     if (this._rpc) await this._rpc.end()
   }
 
-  destroy (err) {
+  destroy(err) {
     this._closed = true
     if (this._rpc) this._rpc.destroy(err)
     else this._stream.destroy(err)
@@ -287,7 +287,7 @@ class Client extends EventEmitter {
 }
 
 class Server extends EventEmitter {
-  constructor (dht, cap, defaultKeyPair, defaultValueEncoding, options = {}) {
+  constructor(dht, cap, defaultKeyPair, defaultValueEncoding, options = {}) {
     super()
 
     this._dht = dht
@@ -306,25 +306,27 @@ class Server extends EventEmitter {
       .on('connection', this._onconnection.bind(this))
   }
 
-  _onclose () {
+  _onclose() {
     this._connections.clear()
     this._responders.clear()
 
     this.emit('close')
   }
 
-  _onlistening () {
+  _onlistening() {
     this.emit('listening')
   }
 
-  _onconnection (stream) {
+  _onconnection(stream) {
     stream.on('error', noop)
 
     const rpc = new ProtomuxRPC(stream, {
       id: this.publicKey,
       valueEncoding: this._defaultValueEncoding,
       handshakeEncoding: Handshake,
-      handshake: this._capability ? { capability: this._cap.generate(stream, this._capability) } : null
+      handshake: this._capability
+        ? { capability: this._cap.generate(stream, this._capability) }
+        : null
     })
 
     // For Hypercore replication
@@ -332,7 +334,10 @@ class Server extends EventEmitter {
 
     this._connections.add(rpc)
     rpc.on('open', (handshake) => {
-      if (this._capability && (!handshake.capability || !this._cap.verify(stream, this._capability, handshake.capability))) {
+      if (
+        this._capability &&
+        (!handshake.capability || !this._cap.verify(stream, this._capability, handshake.capability))
+      ) {
         rpc.destroy(new Error('Remote sent invalid capability'))
       }
     })
@@ -348,35 +353,35 @@ class Server extends EventEmitter {
     this.emit('connection', rpc)
   }
 
-  get dht () {
+  get dht() {
     return this._dht
   }
 
-  get closed () {
+  get closed() {
     return this._server.closed
   }
 
-  get publicKey () {
+  get publicKey() {
     return this._server.publicKey
   }
 
-  get connections () {
+  get connections() {
     return this._connections
   }
 
-  address () {
+  address() {
     return this._server.address()
   }
 
-  async listen (keyPair = this._defaultKeyPair) {
+  async listen(keyPair = this._defaultKeyPair) {
     await this._server.listen(keyPair)
   }
 
-  async close () {
+  async close() {
     await this._server.close()
   }
 
-  respond (method, options, handler) {
+  respond(method, options, handler) {
     if (handler === undefined) {
       handler = options
       options = {}
@@ -391,7 +396,7 @@ class Server extends EventEmitter {
     return this
   }
 
-  unrespond (method) {
+  unrespond(method) {
     this._responders.delete(method)
 
     for (const rpc of this._connections) {
@@ -402,8 +407,8 @@ class Server extends EventEmitter {
   }
 }
 
-function wrap (handler, rpc) {
+function wrap(handler, rpc) {
   return (request) => handler(request, rpc)
 }
 
-function noop () {}
+function noop() {}
