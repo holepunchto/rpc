@@ -189,7 +189,7 @@ Stop listening.
 
 Returns an object containing the address of the server:
 
-```js
+```
 {
   host, // External IP of the server,
   port, // External port of the server if predictable,
